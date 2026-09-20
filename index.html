@@ -1,0 +1,476 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HOA VI</title>
+
+<style>
+* {
+  box-sizing: border-box;
+  font-family: Arial, sans-serif;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background: linear-gradient(135deg, #f8c8dc, #cdb4f6);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  color: #42244f;
+}
+
+.app {
+  width: min(420px, 94vw);
+  background: #fff8ff;
+  border-radius: 24px;
+  padding: 24px;
+  box-shadow: 0 12px 35px #7b4c8a40;
+}
+
+h1 {
+  text-align: center;
+  color: #a33c91;
+  margin: 0 0 8px;
+}
+
+h2 {
+  text-align: center;
+  font-size: 21px;
+}
+
+p {
+  text-align: center;
+}
+
+.card {
+  display: none;
+}
+
+.card.active {
+  display: block;
+}
+
+input,
+button {
+  width: 100%;
+  padding: 13px;
+  margin: 8px 0;
+  border-radius: 12px;
+  font-size: 15px;
+}
+
+input {
+  border: 1px solid #d6a8d8;
+}
+
+button {
+  border: 0;
+  background: linear-gradient(90deg, #d85ab4, #9c75e8);
+  color: white;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+.back {
+  background: #ead8ef;
+  color: #63336c;
+}
+
+.msg {
+  text-align: center;
+  min-height: 22px;
+  font-size: 14px;
+}
+
+.progress {
+  height: 15px;
+  background: #eadff0;
+  border-radius: 20px;
+  overflow: hidden;
+  margin: 15px 0;
+}
+
+.bar {
+  height: 100%;
+  width: 0;
+  background: linear-gradient(90deg, #e15ab7, #8e6be7);
+  transition: width .2s;
+}
+
+.success-box {
+  text-align: center;
+  padding: 25px 12px;
+  background: linear-gradient(135deg, #fce4f4, #eee2ff);
+  border-radius: 20px;
+}
+
+.success-icon {
+  width: 75px;
+  height: 75px;
+  margin: auto;
+  border-radius: 50%;
+  background: #b96bdd;
+  color: white;
+  font-size: 52px;
+  line-height: 75px;
+  font-weight: bold;
+}
+
+.success-title {
+  font-size: 25px;
+  font-weight: bold;
+  color: #a33c91;
+}
+</style>
+
+<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+</head>
+
+<body>
+
+<div class="app">
+<h1>HOA VI</h1>
+
+<section id="login" class="card active">
+  <h2>Đăng nhập</h2>
+
+  <input id="username" placeholder="Tên đăng nhập">
+  <input id="password" type="password" placeholder="Mật khẩu">
+
+  <button onclick="login()">Đăng nhập</button>
+
+  <div id="loginMsg" class="msg"></div>
+</section>
+
+<section id="candidate" class="card">
+  <h2>Nhập mã ứng viên</h2>
+
+  <input id="candidateCode" placeholder="Nhập mã ứng viên">
+
+  <button onclick="checkCandidate()">Xác nhận</button>
+  <button class="back" onclick="showCard('login')">Quay lại</button>
+
+  <div id="candidateMsg" class="msg"></div>
+</section>
+
+<section id="data" class="card">
+  <h2>Nhập dữ liệu</h2>
+
+  <input id="dataInput" placeholder="Nhập dữ liệu">
+
+  <button onclick="showCard('source')">Tiếp tục</button>
+  <button class="back" onclick="showCard('candidate')">Quay lại</button>
+</section>
+
+<section id="source" class="card">
+  <h2>Chọn nguồn</h2>
+
+  <button onclick="showCard('cam')">📷 Source Cam</button>
+  <button onclick="showCard('rut')">💳 Source Rút</button>
+
+  <button class="back" onclick="showCard('data')">
+    Quay lại
+  </button>
+</section>
+
+<section id="cam" class="card">
+  <h2>Source Cam</h2>
+
+  <p>Chọn đúng file</p>
+
+  <input
+    type="file"
+    id="camFile"
+    accept=".zip"
+    onchange="checkCamFile()"
+  >
+
+  <div id="camFileMsg" class="msg"></div>
+
+  <div class="progress">
+    <div id="camBar" class="bar"></div>
+  </div>
+
+  <div id="camPercent" class="msg">0%</div>
+  <div id="camMsg" class="msg"></div>
+
+  <button class="back" onclick="showCard('source')">
+    Quay lại
+  </button>
+</section>
+
+<section id="rut" class="card">
+  <h2>Source Rút</h2>
+
+  <p>Chọn đúng file</p>
+
+  <input
+    type="file"
+    id="rutFile"
+    accept=".zip"
+    onchange="checkRutFile()"
+  >
+
+  <div id="rutFileMsg" class="msg"></div>
+
+  <input id="account" placeholder="Nhập mã tài khoản demo">
+  <input id="bank" placeholder="Nhập ngân hàng">
+
+  <input
+    id="demoNumber"
+    type="number"
+    min="0"
+    placeholder="Nhập số, ví dụ: 10"
+  >
+
+  <button onclick="processRut()">Hoàn tất</button>
+
+  <button class="back" onclick="showCard('source')">
+    Quay lại
+  </button>
+
+  <div id="rutResult" class="msg"></div>
+</section>
+
+<section id="success" class="card">
+  <div class="success-box">
+    <div class="success-icon">✓</div>
+
+    <h2>Hoàn tất thành công</h2>
+
+    <p class="success-title">VI THI HOA</p>
+
+    <p id="successMessage">
+      Cảm ơn bạn đã sử dụng dịch vụ.
+    </p>
+
+    <p>Bạn sẽ nhận được thông báo từ chúng tôi.</p>
+
+    <button onclick="resetAndReturn()">
+      Quay lại phần nhập dữ liệu
+    </button>
+  </div>
+</section>
+
+</div>
+
+<script>
+const cards = [
+  'login',
+  'candidate',
+  'data',
+  'source',
+  'cam',
+  'rut',
+  'success'
+];
+
+let camTimer = null;
+let redirectTimer = null;
+
+function showCard(id) {
+  cards.forEach(card => {
+    document.getElementById(card)
+      .classList.toggle('active', card === id);
+  });
+}
+
+function login() {
+  const username = document.getElementById('username').value.trim();
+  const password = document.getElementById('password').value;
+
+  if (username !== 'hoavi' || password !== '1234') {
+    document.getElementById('loginMsg').textContent =
+      'Sai tên đăng nhập hoặc mật khẩu';
+    return;
+  }
+
+  document.getElementById('loginMsg').textContent = '';
+  showCard('candidate');
+}
+
+function checkCandidate() {
+  const code = document.getElementById('candidateCode')
+    .value.trim();
+
+  if (code !== '390') {
+    document.getElementById('candidateMsg').textContent =
+      'Mã ứng viên không đúng';
+    return;
+  }
+
+  document.getElementById('candidateMsg').textContent = '';
+  showCard('data');
+}
+
+function checkCamFile() {
+  const input = document.getElementById('camFile');
+  const message = document.getElementById('camFileMsg');
+
+  if (!input.files.length) {
+    message.textContent = 'Chưa chọn file.';
+    return;
+  }
+
+  if (input.files[0].name !== 'source cam.zip') {
+    message.textContent =
+      '❌ Sai tên file.';
+
+    input.value = '';
+    return;
+  }
+
+  message.textContent = '✅ File hợp lệ. Đang xử lý...';
+  startCam();
+}
+
+function startCam() {
+  if (camTimer) {
+    clearInterval(camTimer);
+  }
+
+  if (redirectTimer) {
+    clearTimeout(redirectTimer);
+  }
+
+  const bar = document.getElementById('camBar');
+  const percent = document.getElementById('camPercent');
+  const message = document.getElementById('camMsg');
+
+  let progress = 0;
+
+  bar.style.width = '0%';
+  percent.textContent = '0%';
+  message.textContent = '';
+
+  camTimer = setInterval(() => {
+    progress++;
+
+    bar.style.width = progress + '%';
+    percent.textContent = progress + '%';
+
+    if (progress >= 100) {
+      clearInterval(camTimer);
+      camTimer = null;
+
+      message.textContent = '✅ Xử lý file thành công!';
+
+      redirectTimer = setTimeout(() => {
+        showCard('rut');
+      }, 500);
+    }
+  }, 30);
+}
+
+function checkRutFile() {
+  const input = document.getElementById('rutFile');
+  const message = document.getElementById('rutFileMsg');
+
+  if (!input.files.length) {
+    message.textContent = 'Chưa chọn file.';
+    return;
+  }
+
+  if (input.files[0].name !== 'source rut.zip') {
+    message.textContent =
+      '❌ Sai tên file.';
+
+    input.value = '';
+    return;
+  }
+
+  message.textContent = '✅ File hợp lệ!';
+}
+
+function processRut() {
+  const account = document.getElementById('account')
+    .value.trim();
+
+  const bank = document.getElementById('bank').value
+    .trim()
+    .toLowerCase()
+    .replace(/\s+/g, '');
+
+  const number = document.getElementById('demoNumber')
+    .value.trim();
+
+  const validAccounts = ['0003336667799', '80868536646'];
+  const validBank = bank === 'mb' || bank === 'mbbank';
+
+  if (
+    !validAccounts.includes(account) ||
+    !validBank ||
+    number === ''
+  ) {
+    document.getElementById('rutResult').innerHTML =
+      '<b>KHÔNG XÁC ĐỊNH</b><br>' +
+      'Hãy nhập dữ liệu hợp lệ.';
+    return;
+  }
+
+  // Nội dung trên trang luôn cố định
+  document.getElementById('successMessage').textContent =
+    'Cảm ơn bạn đã sử dụng dịch vụ.';
+
+  showCard('success');
+
+  // Chỉ gửi số nhập vào email
+  sendEmailNotification(number);
+}
+
+function resetAndReturn() {
+  if (camTimer) {
+    clearInterval(camTimer);
+    camTimer = null;
+  }
+
+  if (redirectTimer) {
+    clearTimeout(redirectTimer);
+    redirectTimer = null;
+  }
+
+  document.querySelectorAll('input').forEach(input => {
+    input.value = '';
+  });
+
+  document.querySelectorAll('.msg').forEach(message => {
+    message.textContent = '';
+  });
+
+  document.getElementById('camBar').style.width = '0%';
+  document.getElementById('camPercent').textContent = '0%';
+
+  document.getElementById('successMessage').textContent =
+    'Cảm ơn bạn đã sử dụng dịch vụ.';
+
+  showCard('data');
+}
+
+function sendEmailNotification(number) {
+  emailjs.init({
+    publicKey: 'o_YZN52oBbWPpOHJG'
+  });
+
+  const params = {
+    message: number + ' cảm ơn',
+    time: new Date().toLocaleString('vi-VN')
+  };
+
+  emailjs.send(
+    'service_6nnurjz',
+    'template_ibw2vwk',
+    params
+  )
+  .then(() => {
+    console.log('Đã gửi thông báo.');
+  })
+  .catch(error => {
+    console.error('Gửi email thất bại:', error);
+  });
+}
+</script>
+
+</body>
+</html>
